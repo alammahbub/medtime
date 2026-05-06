@@ -1,6 +1,6 @@
 # 💊 MedTime - Smart Medication Manager
 
-[![Download APK](https://img.shields.io/badge/Download-APK-brightgreen?style=for-the-badge&logo=android)](https://github.com/alammahbub/medtime/raw/main/build/app/outputs/flutter-apk/medtime.apk)
+[![Download APK](https://img.shields.io/badge/Download-APK-brightgreen?style=for-the-badge&logo=android)](https://github.com/alammahbub/medtime/raw/main/medtime.apk)
 
 **MedTime** is a premium, high-density medication management application designed for elderly patients and power users who manage complex daily regimens. It focuses on minimalist aesthetics, extreme space efficiency, and intuitive meal-based scheduling.
 
