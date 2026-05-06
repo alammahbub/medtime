@@ -10,7 +10,8 @@
 
 - **🍱 High-Density Dashboard**: Grouped view of daily medications by time slot (e.g., "After Dinner") to reduce scrolling.
 - **🍴 Meal-Based Scheduling**: Intuitively link medications to meal times (Breakfast, Lunch, Dinner, Bed) with automatic offsets.
-- **⏰ Smart Sync Engine**: Changing your dinner time in settings automatically recalculates and updates all associated medication reminders and dashboard logs.
+- **🔄 Smart Sync Engine**: Changing your dinner time in settings automatically recalculates and updates all associated medication reminders and today's dashboard logs in real-time.
+- **🛡️ Resilient Startup**: Advanced boot sequence with safety timeouts and error shielding to ensure the app launches instantly on all devices (including Samsung A-series).
 - **🏙️ Minimalist UI**: Ultra-compact cards showing names, dosages, and full timing schedules in a single row.
 - **📸 Visual Identification**: Support for pill photos and color-coding for quick recognition.
 - **📴 100% Offline**: Privacy-first design with local SQLite storage and local notifications.
@@ -54,7 +55,7 @@ graph TD
 
 ---
 
-## 🧠 Smart Scheduling Logic
+## 🧠 Smart Scheduling & Sync Logic
 
 MedTime uses a relative scheduling system. Instead of hardcoding times, it links medications to "Life Events" (Meals).
 
@@ -95,7 +96,7 @@ flowchart TD
 ### Installation
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/alammahbub/medtime.git
    ```
 2. Install dependencies:
    ```bash

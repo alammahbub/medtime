@@ -5,14 +5,26 @@ import 'core/services/notification_service.dart';
 import 'app.dart';
 
 void main() async {
+  // 1. Ensure Flutter is ready
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize services
-  await NotificationService.instance.initialize();
+  // 2. Initialize Services with Safety Net
+  try {
+    // Try to initialize notifications but don't let a failure block the app
+    await NotificationService.instance.initialize().timeout(
+      const Duration(seconds: 3),
+      onTimeout: () => debugPrint('Notification initialization timed out'),
+    );
+  } catch (e) {
+    debugPrint('Service Initialization Error: $e');
+  }
 
+  // 3. Launch App
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => MedicationProvider())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => MedicationProvider()),
+      ],
       child: const MedTimeApp(),
     ),
   );

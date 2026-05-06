@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
@@ -14,20 +15,24 @@ class NotificationService {
   static const _channelName = 'Medication Reminders';
 
   Future<void> initialize() async {
-    tz.initializeTimeZones();
+    try {
+      tz.initializeTimeZones();
 
-    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const ios = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
+      const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const ios = DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
 
-    await _plugin.initialize(
-      const InitializationSettings(android: android, iOS: ios),
-      onDidReceiveNotificationResponse: _onNotificationResponse,
-      onDidReceiveBackgroundNotificationResponse: _backgroundHandler,
-    );
+      await _plugin.initialize(
+        const InitializationSettings(android: android, iOS: ios),
+        onDidReceiveNotificationResponse: _onNotificationResponse,
+        onDidReceiveBackgroundNotificationResponse: _backgroundHandler,
+      );
+    } catch (e) {
+      debugPrint('NotificationService: Failed to initialize: $e');
+    }
   }
 
   Future<bool> requestPermissions() async {
