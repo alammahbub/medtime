@@ -139,7 +139,7 @@ class DatabaseHelper {
       SELECT dl.*, m.name as med_name, m.color_hex, m.image_path, m.dosage_amount, m.dosage_unit, s.label as schedule_label
       FROM dose_logs dl
       JOIN medications m ON dl.medication_id = m.id
-      JOIN schedules s ON dl.schedule_id = s.id
+      LEFT JOIN schedules s ON dl.schedule_id = s.id
       WHERE dl.scheduled_time LIKE ?
       ORDER BY dl.scheduled_time ASC
     ''', ['$dateStr%']);

@@ -47,12 +47,18 @@ class _HomeScreenState extends State<HomeScreen> {
             groupedDoses.putIfAbsent(label, () => []).add(d);
           }
 
-          // Sort groups by time
-          final sortedLabels = groupedDoses.keys.toList()..sort((a, b) {
-            final timeA = DateTime.parse(groupedDoses[a]![0]['scheduled_time']);
-            final timeB = DateTime.parse(groupedDoses[b]![0]['scheduled_time']);
-            return timeA.compareTo(timeB);
-          });
+          // Sort groups by time with safety
+          final sortedLabels = groupedDoses.keys.toList();
+          try {
+            sortedLabels.sort((a, b) {
+              final timeAStr = groupedDoses[a]?[0]['scheduled_time'];
+              final timeBStr = groupedDoses[b]?[0]['scheduled_time'];
+              if (timeAStr == null || timeBStr == null) return 0;
+              return DateTime.parse(timeAStr).compareTo(DateTime.parse(timeBStr));
+            });
+          } catch (e) {
+            debugPrint('Sorting error: $e');
+          }
 
           final taken = doses.where((d) => d['status'] == 'taken').length;
           final total = doses.length;
