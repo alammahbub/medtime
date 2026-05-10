@@ -114,6 +114,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       _presetRow(['Before Dinner', 'After Dinner']),
       const SizedBox(height: 12),
       _presetRow(['Before Bed', 'Custom Time']),
+      const SizedBox(height: 12),
+      _presetRow(['Every X Hours']),
     ],
   );
 
@@ -127,14 +129,27 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
 
   Widget _timingChip(String label) {
     final isCustom = label == 'Custom Time';
-    final isAlreadySelectedCustom = label.contains('|');
-    final displayLabel = isAlreadySelectedCustom ? label.split('|')[0] : label;
+    final isInterval = label == 'Every X Hours';
+    final isDataCustom = label.startsWith('at ');
+    final isDataInterval = label.startsWith('interval|');
+    
+    String displayLabel = label;
+    if (isDataCustom) displayLabel = label.split('|')[0];
+    if (isDataInterval) {
+      final p = label.split('|');
+      displayLabel = 'Every ${p[1]} ${p[2]}';
+    }
+
     final isSelected = _selectedPresets.contains(label);
 
     return FilterChip(
       label: Text(displayLabel, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
       selected: isSelected,
       onSelected: (val) async {
+        if (isInterval) {
+          await _showIntervalDialog();
+          return;
+        }
         if (isCustom) {
           final t = await showTimePicker(context: context, initialTime: TimeOfDay.now());
           if (t != null) {
@@ -236,7 +251,37 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   }
 
   List<MedSchedule> _buildSchedules(String medId, Set<String> presets, Map<String, TimeOfDay> mealTimes, String now) {
-    return presets.map((label) {
+    final List<MedSchedule> allSchedules = [];
+    for (final label in presets) {
+      if (label.startsWith('interval|')) {
+        final parts = label.split('|');
+        final value = int.parse(parts[1]);
+        final unit = parts[2];
+        final startStr = parts[3];
+        final startH = int.parse(startStr.split(':')[0]);
+        final startM = int.parse(startStr.split(':')[1]);
+        
+        int intervalMins = unit == 'hours' ? value * 60 : value;
+        if (intervalMins <= 0) intervalMins = 60; // Safety
+        
+        int currentMins = startH * 60 + startM;
+        final endMins = currentMins + (24 * 60);
+        
+        while (currentMins < endMins) {
+          final h = (currentMins ~/ 60) % 24;
+          final m = currentMins % 60;
+          final timeStr = '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
+          
+          allSchedules.add(MedSchedule(
+            id: _uuid.v4(), medicationId: medId, timeOfDay: timeStr,
+            label: 'Every $value $unit', isActive: true, daysOfWeek: '1,2,3,4,5,6,7',
+            notifyBeforeMinutes: 10, createdAt: now,
+          ));
+          currentMins += intervalMins;
+        }
+        continue;
+      }
+
       TimeOfDay baseTime; int offset = 0;
       if (label.contains('|')) {
         final timePart = label.split('|')[1];
@@ -252,8 +297,57 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       final finalTime = TimeOfDay(hour: (totalMinutes ~/ 60) % 24, minute: totalMinutes % 60);
       final timeStr = '${finalTime.hour.toString().padLeft(2, '0')}:${finalTime.minute.toString().padLeft(2, '0')}';
 
-      return MedSchedule(id: _uuid.v4(), medicationId: medId, timeOfDay: timeStr, label: label, isActive: true, daysOfWeek: '1,2,3,4,5,6,7', notifyBeforeMinutes: 10, createdAt: now);
-    }).toList();
+      allSchedules.add(MedSchedule(id: _uuid.v4(), medicationId: medId, timeOfDay: timeStr, label: label, isActive: true, daysOfWeek: '1,2,3,4,5,6,7', notifyBeforeMinutes: 10, createdAt: now));
+    }
+    return allSchedules;
+  }
+
+  Future<void> _showIntervalDialog() async {
+    int value = 4;
+    String unit = 'hours';
+    TimeOfDay startTime = const TimeOfDay(hour: 8, minute: 0);
+
+    final res = await showDialog<String>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Set Interval'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  const Text('Every '),
+                  SizedBox(width: 50, child: TextField(keyboardType: TextInputType.number, decoration: const InputDecoration(hintText: '4'), onChanged: (v) => value = int.tryParse(v) ?? 4)),
+                  const SizedBox(width: 10),
+                  DropdownButton<String>(
+                    value: unit,
+                    items: const [DropdownMenuItem(value: 'hours', child: Text('hours')), DropdownMenuItem(value: 'minutes', child: Text('minutes'))],
+                    onChanged: (v) => setDialogState(() => unit = v!),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                title: const Text('Starting from'),
+                subtitle: Text(startTime.format(context)),
+                trailing: const Icon(Icons.access_time),
+                onTap: () async {
+                  final t = await showTimePicker(context: context, initialTime: startTime);
+                  if (t != null) setDialogState(() => startTime = t);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            ElevatedButton(onPressed: () => Navigator.pop(ctx, 'interval|$value|$unit|${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}'), child: const Text('Apply')),
+          ],
+        ),
+      ),
+    );
+
+    if (res != null) setState(() => _selectedPresets.add(res));
   }
 
   Widget _buildImagePicker() => GestureDetector(onTap: _pickImage, child: Container(width: 60, height: 60, decoration: BoxDecoration(color: AppTheme.colorFromHex(_colorHex).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(15), border: Border.all(color: AppTheme.colorFromHex(_colorHex), width: 2)), child: _imagePath != null && File(_imagePath!).existsSync() ? ClipRRect(borderRadius: BorderRadius.circular(13), child: Image.file(File(_imagePath!), fit: BoxFit.cover)) : Icon(Icons.camera_alt_outlined, size: 24, color: AppTheme.colorFromHex(_colorHex))));

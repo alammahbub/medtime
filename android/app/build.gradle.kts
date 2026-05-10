@@ -39,6 +39,14 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    applicationVariants.all {
+        val variantName = name
+        outputs.all {
+            val outputImpl = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            outputImpl.outputFileName = "Medtime-${variantName}.apk"
+        }
+    }
 }
 
 flutter {
