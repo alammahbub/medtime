@@ -22,9 +22,7 @@ void main() async {
   // 3. Launch App
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => MedicationProvider()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => MedicationProvider())],
       child: const MedTimeApp(),
     ),
   );

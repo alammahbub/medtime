@@ -189,6 +189,19 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     setState(() => _saving = true);
     try {
       final prov = context.read<MedicationProvider>();
+      
+      // Request permissions before proceeding (Critical for Release Mode)
+      final hasPerms = await prov.requestNotificationPermissions();
+      if (!hasPerms) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Notifications and Exact Alarm permissions are required to schedule reminders.'))
+          );
+        }
+        setState(() => _saving = false);
+        return;
+      }
+
       final mealTimes = await SettingsService.instance.getMealTimes();
       final now = DateTime.now().toIso8601String();
       final medId = widget.medication?.id ?? _uuid.v4();

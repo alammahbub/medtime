@@ -100,6 +100,8 @@ class MedicationProvider extends ChangeNotifier {
     return maps.map(MedSchedule.fromMap).toList();
   }
 
+  Future<bool> requestNotificationPermissions() => _ns.requestPermissions();
+
   Future<void> recalculateMealSchedules() async {
     _loading = true;
     notifyListeners();
